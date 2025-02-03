@@ -24,10 +24,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const { setAuth, clearAuth } = useAuthStore();
 
   useEffect(() => {
+    // Check active sessions and sets the user
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", { event, session });
       if (session?.user) {
         setAuth(
           true,
@@ -42,7 +42,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session);
       if (session?.user) {
         setAuth(
           true,
@@ -58,18 +57,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const login = async (memberNumber: string, password: string) => {
     try {
-      console.log("Attempting login for member:", memberNumber);
-
       const { data: memberData, error: memberError } = await supabase
         .from("members")
         .select("email")
         .eq("member_number", memberNumber)
         .single();
 
-      console.log("Member lookup result:", { memberData, memberError });
-
       if (memberError || !memberData?.email) {
-        console.error("Member lookup failed:", memberError);
         return { error: { message: "Invalid member number" } };
       }
 
@@ -78,10 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         password: password,
       });
 
-      console.log("Sign in result:", { data, error });
-
       if (error) {
-        console.error("Sign in failed:", error);
         await supabase.rpc("handle_failed_login", {
           member_number: memberNumber,
         });
@@ -98,7 +89,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       await supabase.rpc("reset_failed_login", { member_number: memberNumber });
       return { error: null };
     } catch (error) {
-      console.error("Login error:", error);
       return { error };
     }
   };
